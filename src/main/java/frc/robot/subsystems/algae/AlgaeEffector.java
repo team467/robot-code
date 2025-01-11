@@ -7,7 +7,7 @@ public class AlgaeEffector extends SubsystemBase {
   private final AlgaeEffectorIO io;
   private PIDController pivotFeedback =
       new PIDController(AlgaeEffefectorConstants.PIVOT_KP, 0, AlgaeEffefectorConstants.PIVOT_KD);
-  // commands
+  // TODO: commands
   public AlgaeEffector(AlgaeEffectorIO io) {
     this.io = io;
   }

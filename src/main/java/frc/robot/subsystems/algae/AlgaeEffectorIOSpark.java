@@ -7,8 +7,7 @@ public class AlgaeEffectorIOSpark implements AlgaeEffectorIO {
   // two motors (pivot and intake)
   private final SparkMax pivotMotor;
   private final SparkMax intakeMotor;
-  // schematics
-  // TODO Move schematic later
+  // TODO: schematics
   private static final int PIVOT_ID = 1;
   private static final int INTAKE_ID = 2;
 

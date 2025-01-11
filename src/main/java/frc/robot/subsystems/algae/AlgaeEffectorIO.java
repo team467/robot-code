@@ -13,7 +13,7 @@ public interface AlgaeEffectorIO {
     public double pivotPosition;
   }
 
-  default void updateInputs(AlgaeEffectorIOInputs inputs) {} // add AutoLogged
+  default void updateInputs(AlgaeEffectorIOInputs inputs) {} // TODO add AutoLogged
 
   default void setPivotVolts(double volts) {}
 
