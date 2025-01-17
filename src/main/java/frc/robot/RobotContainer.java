@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import static frc.robot.subsystems.vision.VisionConstants.*;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
@@ -14,12 +12,15 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.commands.drive.DriveCommands;
+import frc.lib.io.gyro3d.GyroIO;
+import frc.lib.io.gyro3d.GyroPigeon2;
+import frc.lib.utils.AllianceFlipUtil;
 import frc.robot.commands.drive.DriveWithDpad;
-import frc.robot.subsystems.drive.*;
+import frc.robot.commands.drive.DriveWithJoysticks;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.ModuleIO;
+import frc.robot.subsystems.drive.ModuleIOSparkMAX;
 import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -63,28 +64,23 @@ public class RobotContainer {
                       Units.inchesToMeters(15.5)),
                   new Rotation3d(0, Units.degreesToRadians(-30), Units.degreesToRadians(180)));
 
-          vision =
-              new Vision(
-                  drive::addVisionMeasurement,
-                  new VisionIOPhotonVision(camera0Name, robotToCamera0));
-
           drive =
               new Drive(
-                  new GyroIOPigeon2(),
-                  new ModuleIOSpark(0),
-                  new ModuleIOSpark(1),
-                  new ModuleIOSpark(2),
-                  new ModuleIOSpark(3));
+                  new GyroPigeon2(Schematic.GYRO_ID),
+                  new ModuleIOSparkMAX(0),
+                  new ModuleIOSparkMAX(1),
+                  new ModuleIOSparkMAX(2),
+                  new ModuleIOSparkMAX(3));
         }
 
         case ROBOT_SIMBOT -> {
           drive =
               new Drive(
                   new GyroIO() {},
-                  new ModuleIOSim(),
-                  new ModuleIOSim(),
-                  new ModuleIOSim(),
-                  new ModuleIOSim());
+                  new ModuleIO() {},
+                  new ModuleIO() {},
+                  new ModuleIO() {},
+                  new ModuleIO() {});
         }
       }
     }
@@ -105,17 +101,7 @@ public class RobotContainer {
     // Set up auto routines
     autoChooser.addDefaultOption("Do Nothing", Commands.none());
 
-    // Drive SysId
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
 
     // Configure the button bindings
     configureButtonBindings();
@@ -129,22 +115,23 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
 
-    driverController.y().onTrue(Commands.runOnce(() -> isRobotOriented = !isRobotOriented));
-    // Default command, normal field-relative drive
     drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
+        new DriveWithJoysticks(
             drive,
             () -> -driverController.getLeftY(),
             () -> -driverController.getLeftX(),
-            () -> -driverController.getRightX()));
+            () -> -driverController.getRightX(),
+            () -> isRobotOriented // TODO: add toggle
+            ));
     driverController
         .start()
         .onTrue(
             Commands.runOnce(
                     () ->
                         drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                    drive)
+                            new Pose2d(
+                                drive.getPose().getTranslation(),
+                                AllianceFlipUtil.apply(new Rotation2d()))))
                 .ignoringDisable(true));
     driverController
         .pov(-1)
