@@ -19,15 +19,15 @@ import edu.wpi.first.math.util.Units;
 public class EffectorIOSparkMax implements EffectorIO {
   private final SparkMax effector;
 
-  private final RelativeEncoder effectorEncoder;
+  private final RelativeEncoder encoder;
 
-  private final SparkLimitSwitch effectorLimitSwitch;
+  private final SparkLimitSwitch limitSwitch;
   double rotsToRads = Units.rotationsToRadians(1);
 
   public EffectorIOSparkMax() {
     effector = new SparkMax(1, MotorType.kBrushless);
-    effectorLimitSwitch = effector.getReverseLimitSwitch();
-    effectorEncoder = effector.getEncoder();
+    limitSwitch = effector.getReverseLimitSwitch();
+    encoder = effector.getEncoder();
     var effectorConfig = new SparkFlexConfig();
     effectorConfig
         .idleMode(IdleMode.kBrake)
@@ -49,14 +49,14 @@ public class EffectorIOSparkMax implements EffectorIO {
                 effectorConfig,
                 SparkBase.ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters));
-    tryUntilOk(effector, 5, () -> effectorEncoder.setPosition(0.0));
+    tryUntilOk(effector, 5, () -> encoder.setPosition(0.0));
   }
 
   public void updateInputs(EffectorIOInputs inputs) {
-    inputs.effectorVelocityRadPerSec = effectorEncoder.getVelocity();
+    inputs.effectorVelocityRadPerSec = encoder.getVelocity();
     inputs.effectorAppliedVolts = effector.getBusVoltage() * effector.getAppliedOutput();
     inputs.effectorCurrentAmps = effector.getOutputCurrent();
-    inputs.effectorLimitSwitchPressed = effectorLimitSwitch.isPressed();
+    inputs.effectorLimitSwitchPressed = limitSwitch.isPressed();
   }
 
   public void setEffectorVoltage(double volts) {
