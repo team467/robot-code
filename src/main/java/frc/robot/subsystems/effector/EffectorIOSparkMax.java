@@ -10,13 +10,14 @@ import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLimitSwitch;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.LimitSwitchConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.math.util.Units;
 
 public class EffectorIOSparkMax implements EffectorIO {
-  private final SparkFlex effector;
+  private final SparkMax effector;
 
   private final RelativeEncoder effectorEncoder;
 
@@ -24,7 +25,7 @@ public class EffectorIOSparkMax implements EffectorIO {
   double rotsToRads = Units.rotationsToRadians(1);
 
   public EffectorIOSparkMax() {
-    effector = new SparkFlex(1, MotorType.kBrushless);
+    effector = new SparkMax(1, MotorType.kBrushless);
     effectorLimitSwitch = effector.getReverseLimitSwitch();
     effectorEncoder = effector.getEncoder();
     var effectorConfig = new SparkFlexConfig();
@@ -40,15 +41,6 @@ public class EffectorIOSparkMax implements EffectorIO {
         .velocityConversionFactor(effectorEncoderVelocityFactor)
         .uvwMeasurementPeriod(10)
         .uvwAverageDepth(2);
-    effectorConfig
-        .signals
-        .primaryEncoderPositionAlwaysOn(true)
-        .primaryEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
-        .primaryEncoderVelocityAlwaysOn(true)
-        .primaryEncoderVelocityPeriodMs(20)
-        .appliedOutputPeriodMs(20)
-        .busVoltagePeriodMs(20)
-        .outputCurrentPeriodMs(20);
     tryUntilOk(
         effector,
         5,
