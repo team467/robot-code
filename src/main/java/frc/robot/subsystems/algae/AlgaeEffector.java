@@ -8,6 +8,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class AlgaeEffector extends SubsystemBase {
   private boolean armExtended = false;
+  private boolean algaeMotorStarted = false;
   private final AlgaeEffectorIO io;
   private PIDController pivotFeedback =
       new PIDController(AlgaeEffectorConstants.PIVOT_KP, 0, AlgaeEffectorConstants.PIVOT_KD);
@@ -23,45 +24,31 @@ public class AlgaeEffector extends SubsystemBase {
     Logger.processInputs(getName(), inputs);
   }
 
-  /** Moves algae arm outwards */
-  public Command extendArm() {
-    return Commands.startEnd(
-            () -> {
-              io.setPivotVolts(AlgaeEffectorConstants.EXTEND_VOLTAGE);
-              armExtended = true;
-            },
-            () -> io.setPivotVolts(AlgaeEffectorConstants.ZERO_VOLTAGE),
-            this)
-        .withTimeout(2);
-  }
-
-  /** Moves algae arm inwards. */
-  public Command retractArm() {
-    return Commands.startEnd(
+  public Command stowArm() {
+    return Commands.run(
             () -> {
               io.setPivotVolts(AlgaeEffectorConstants.RETRACT_VOLTAGE);
-              armExtended = false;
-            },
-            () -> io.setPivotVolts(AlgaeEffectorConstants.ZERO_VOLTAGE),
-            this)
-        .withTimeout(2);
+              io.setRemovalVolts(0);
+            })
+        .until(() -> inputs.isStowed);
   }
 
-  /** Makes arm either go in or out */
-  public Command toggleArm() {
-    return Commands.either(retractArm(), extendArm(), () -> armExtended);
-  }
-
-  /** Spins the motor to start the removal of algae */
-  public Command startRemoval() {
-    return Commands.startEnd(
-        () -> io.setRemovalVolts(AlgaeEffectorConstants.REMOVAL_VOLTAGE),
-        () -> io.setRemovalVolts(AlgaeEffectorConstants.ZERO_VOLTAGE),
+  /** When the arm is extended, it starts the algae motor too */
+  public Command removeAlgae() {
+    return Commands.run(
+        () -> {
+          io.setPivotVolts(AlgaeEffectorConstants.EXTEND_VOLTAGE);
+          io.setRemovalVolts(AlgaeEffectorConstants.REMOVAL_VOLTAGE);
+        },
         this);
   }
 
-  /** Stops spinning the removal motor */
-  public Command stopRemoval() {
-    return this.runOnce(() -> io.setRemovalVolts(AlgaeEffectorConstants.ZERO_VOLTAGE));
+  public Command stop() {
+    return Commands.run(
+        () -> {
+          io.setPivotVolts(0);
+          io.setRemovalVolts(0);
+        },
+        this);
   }
 }
